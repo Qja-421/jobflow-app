@@ -17,9 +17,9 @@ export function DashboardSidebar() {
         JOBFLOW<span>.AI</span>
       </a>
       <div className="app-user">
-        <div className="avatar">MD</div>
+        <div className="avatar">JM</div>
         <div>
-          <strong>Mariam Diallo</strong>
+          <strong>Jacques Alphonse Matoko</strong>
           <span>COMPTE PRO ACTIF</span>
         </div>
       </div>

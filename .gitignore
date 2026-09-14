@@ -6,5 +6,8 @@ out/
 .env
 .env*.local
 
+# n8n local files with active keys
+n8n/*.json
+
 # Logs
 npm-debug.log*

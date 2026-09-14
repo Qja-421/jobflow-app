@@ -15,15 +15,15 @@ const fallbackApplications: Application[] = [
 ];
 
 const fallbackData: DashboardData = {
-  userName: "Mariam",
-  offersThisWeek: 38,
-  applicationsSent: 14,
-  responseRate: 21,
-  pendingValidation: 7,
+  userName: "Jacques Alphonse Matoko",
+  offersThisWeek: 12,
+  applicationsSent: 4,
+  responseRate: 35,
+  pendingValidation: 2,
   opportunities: fallbackOpportunities,
   applications: fallbackApplications,
-  documentsReady: 4,
-  lastSyncedAt: "aujourd’hui, 09:42",
+  documentsReady: 3,
+  lastSyncedAt: "aujourd’hui, direct",
 };
 
 type SupabaseMatch = {

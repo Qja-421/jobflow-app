@@ -27,7 +27,7 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "YOUR_SUPABASE_SERVICE_ROLE_KEY"
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthYndmY21wb2JzbGpkeWNseG9hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4OTMyODE1NSwiZXhwIjoyMTA0OTA0MTU1fQ.Id5N4NLkl1lYQ6OYBtLFu_WmAyqAQs84NBVub3bDK_U"
             },
             {
               "name": "Authorization",
@@ -57,7 +57,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const profileRaw = $('2. Charger Profil Candidat (Supabase)').first().json;\nconst profile = Array.isArray(profileRaw) && profileRaw[0] ? profileRaw[0] : { full_name: 'Mariam Diallo' };\n\nconst jobsRaw = $('3. Récupérer Offres (Arbeit Now)').first().json;\nconst jobs = jobsRaw.data || [];\n\n// Mots clés pertinents ou fallback\nconst keywords = ['program','project','coordinator','manager','officer','humanitarian','development','international','social','field','lead','operations'];\n\nlet filtered = jobs.filter(job => {\n  const text = ((job.title || '') + ' ' + (job.tags || []).join(' ')).toLowerCase();\n  return keywords.some(k => text.includes(k));\n});\n\nif (filtered.length === 0) {\n  filtered = jobs;\n}\n\n// On sélectionne les 3 premières pour respecter les quotas IA de façon ultra stable\nconst selected = filtered.slice(0, 3);\n\nreturn selected.map(job => ({\n  json: {\n    externalId: `arbeitnow-${job.slug}`,\n    title: job.title || 'Poste',\n    company: job.company_name || 'Organisation Internationale',\n    location: job.location || 'International / Remote',\n    source: 'ArbeitNow',\n    sourceUrl: job.url || 'https://www.arbeitnow.com',\n    publishedAt: job.created_at ? new Date(job.created_at * 1000).toISOString() : new Date().toISOString(),\n    description: (job.description || '').replace(/<[^>]*>/g, '').slice(0, 500),\n    candidateName: profile.full_name || 'Mariam Diallo',\n    candidateSkills: 'Coordination humanitaire, gestion de projets bailleurs (UNICEF, USAID, ECHO), suivi MEAL, leadership terrain.'\n  }\n}));"
+        "jsCode": "const profileRaw = $('2. Charger Profil Candidat (Supabase)').first().json;\nconst profile = Array.isArray(profileRaw) && profileRaw[0] ? profileRaw[0] : { full_name: 'Jacques Alphonse Matoko' };\n\nconst jobsRaw = $('3. Récupérer Offres (Arbeit Now)').first().json;\nconst jobs = jobsRaw.data || [];\n\n// Mots-clés ciblés sur le profil réel : QHSE, IA/Automatisation, Management, Lead, Tech\nconst keywords = ['qhse','quality','safety','hse','automat','ai','engineer','project','manager','lead','director','operations','consultant','digital','developer'];\n\nlet filtered = jobs.filter(job => {\n  const text = ((job.title || '') + ' ' + (job.tags || []).join(' ') + ' ' + (job.description || '')).toLowerCase();\n  return keywords.some(k => text.includes(k));\n});\n\nif (filtered.length === 0) {\n  filtered = jobs;\n}\n\nconst selected = filtered.slice(0, 3);\n\nreturn selected.map(job => ({\n  json: {\n    externalId: `arbeitnow-${job.slug}`,\n    title: job.title || 'Poste',\n    company: job.company_name || 'Entreprise Internationale',\n    location: job.location || 'Remote / International',\n    source: 'ArbeitNow',\n    sourceUrl: job.url || 'https://www.arbeitnow.com',\n    publishedAt: job.created_at ? new Date(job.created_at * 1000).toISOString() : new Date().toISOString(),\n    description: (job.description || '').replace(/<[^>]*>/g, '').slice(0, 600),\n    candidateName: profile.full_name || 'Jacques Alphonse Matoko',\n    candidateSkills: 'Responsable QHSE (Master QHSE, ISO 9001/14001/45001, audit, risques), Expert en Automatisation IA (N8N, Agents IA Claude/GPT-4/Groq/DeepSeek, Python, Supabase), Chef de Projet (MS Project MCA), Trilingue Français/Anglais/Russe, 10 ans expérience.'\n  }\n}));"
       },
       "id": "prepare-ai-batch",
       "name": "4. Préparer pour l'IA",
@@ -114,7 +114,7 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "YOUR_SUPABASE_SERVICE_ROLE_KEY"
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthYndmY21wb2JzbGpkeWNseG9hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4OTMyODE1NSwiZXhwIjoyMTA0OTA0MTU1fQ.Id5N4NLkl1lYQ6OYBtLFu_WmAyqAQs84NBVub3bDK_U"
             },
             {
               "name": "Authorization",
@@ -150,7 +150,7 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "YOUR_SUPABASE_SERVICE_ROLE_KEY"
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthYndmY21wb2JzbGpkeWNseG9hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4OTMyODE1NSwiZXhwIjoyMTA0OTA0MTU1fQ.Id5N4NLkl1lYQ6OYBtLFu_WmAyqAQs84NBVub3bDK_U"
             },
             {
               "name": "Authorization",

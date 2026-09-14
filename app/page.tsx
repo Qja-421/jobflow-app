@@ -127,7 +127,7 @@ export default function Home() {
             <article className={`price-card ${plan.featured ? "price-card-featured" : ""}`} key={plan.name}>
               <div className="price-card-header"><div><p className="eyebrow">{plan.featured ? "Le plus choisi" : "Pour démarrer"}</p><h3>{plan.name}</h3></div>{plan.featured && <span className="plan-tag">RECOMMANDÉ</span>}</div>
               <p className="price-detail">{plan.detail}</p>
-              <div className="price"><strong>{plan.price}€</strong><span>/ mois</span></div>
+              <div className="price"><strong>{plan.price}$</strong><span>/ mois</span></div>
               <ul>{plan.items.map((item) => <li key={item}><span>✓</span>{item}</li>)}</ul>
               <Button href="#commencer" variant={plan.featured ? "light" : "ghost"}>Choisir {plan.name} <span aria-hidden="true">↗</span></Button>
             </article>
