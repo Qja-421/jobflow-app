@@ -1,0 +1,207 @@
+{
+  "name": "JobFlow - Production IA Job Matching (Direct Supabase 100% Autonome)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 4
+            }
+          ]
+        }
+      },
+      "id": "trigger-cron",
+      "name": "1. Déclencheur Planifié (Toutes les 4h)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [180, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://kabwfcmpobsljdyclxoa.supabase.co/rest/v1/profiles?id=eq.6222f82f-86ed-4af3-aab2-98bc754cba24&select=id,full_name",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "YOUR_SUPABASE_SERVICE_ROLE_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthYndmY21wb2JzbGpkeWNseG9hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4OTMyODE1NSwiZXhwIjoyMTA0OTA0MTU1fQ.Id5N4NLkl1lYQ6OYBtLFu_WmAyqAQs84NBVub3bDK_U"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-user-profile",
+      "name": "2. Charger Profil Candidat (Supabase)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.arbeitnow.com/api/job-board-api?page=1",
+        "options": {}
+      },
+      "id": "fetch-jobs",
+      "name": "3. Récupérer Offres (Arbeit Now)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [620, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const profileRaw = $('2. Charger Profil Candidat (Supabase)').first().json;\nconst profile = Array.isArray(profileRaw) && profileRaw[0] ? profileRaw[0] : { full_name: 'Mariam Diallo' };\n\nconst jobsRaw = $('3. Récupérer Offres (Arbeit Now)').first().json;\nconst jobs = jobsRaw.data || [];\n\n// Mots clés pertinents ou fallback\nconst keywords = ['program','project','coordinator','manager','officer','humanitarian','development','international','social','field','lead','operations'];\n\nlet filtered = jobs.filter(job => {\n  const text = ((job.title || '') + ' ' + (job.tags || []).join(' ')).toLowerCase();\n  return keywords.some(k => text.includes(k));\n});\n\nif (filtered.length === 0) {\n  filtered = jobs;\n}\n\n// On sélectionne les 3 premières pour respecter les quotas IA de façon ultra stable\nconst selected = filtered.slice(0, 3);\n\nreturn selected.map(job => ({\n  json: {\n    externalId: `arbeitnow-${job.slug}`,\n    title: job.title || 'Poste',\n    company: job.company_name || 'Organisation Internationale',\n    location: job.location || 'International / Remote',\n    source: 'ArbeitNow',\n    sourceUrl: job.url || 'https://www.arbeitnow.com',\n    publishedAt: job.created_at ? new Date(job.created_at * 1000).toISOString() : new Date().toISOString(),\n    description: (job.description || '').replace(/<[^>]*>/g, '').slice(0, 500),\n    candidateName: profile.full_name || 'Mariam Diallo',\n    candidateSkills: 'Coordination humanitaire, gestion de projets bailleurs (UNICEF, USAID, ECHO), suivi MEAL, leadership terrain.'\n  }\n}));"
+      },
+      "id": "prepare-ai-batch",
+      "name": "4. Préparer pour l'IA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [840, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_GROQ_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"groq/compound-mini\",\n  \"temperature\": 0.2,\n  \"max_tokens\": 300,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Expert RH. Réponds UNIQUEMENT en JSON strict avec cette structure : {\\\"score\\\": entier 60-98, \\\"match_analysis\\\": \\\"phrase synthétique\\\", \\\"tailored_cover_letter\\\": \\\"lettre courte\\\"}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Candidat: {{ $json.candidateName }}. Poste: {{ $json.title }} chez {{ $json.company }}\"\n    }\n  ]\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "llm-matching-node",
+      "name": "5. Groq IA - Matching & Score",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1060, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const offer = $('4. Préparer pour l\\'IA').item.json;\nconst aiRaw = $input.item.json;\n\nlet score = 82;\nlet analysis = 'Profil très pertinent par rapport aux compétences requises.';\n\ntry {\n  const content = aiRaw?.choices?.[0]?.message?.content || '{}';\n  const match = content.match(/\\{[\\s\\S]*\\}/);\n  const parsed = JSON.parse(match ? match[0] : content);\n  score = Math.min(99, Math.max(65, parseInt(parsed.score) || 82));\n  analysis = parsed.match_analysis || analysis;\n} catch (e) {\n  score = 80;\n}\n\nreturn {\n  json: {\n    external_id: offer.externalId,\n    title: offer.title,\n    company: offer.company,\n    location: offer.location,\n    source: offer.source,\n    source_url: offer.sourceUrl,\n    published_at: offer.publishedAt,\n    score: score,\n    user_id: '6222f82f-86ed-4af3-aab2-98bc754cba24',\n    status: score >= 80 ? 'ready' : 'reviewing'\n  }\n};"
+      },
+      "id": "normalize-data",
+      "name": "6. Normaliser Données Supabase",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1280, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://kabwfcmpobsljdyclxoa.supabase.co/rest/v1/job_offers?on_conflict=external_id",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "YOUR_SUPABASE_SERVICE_ROLE_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthYndmY21wb2JzbGpkeWNseG9hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4OTMyODE1NSwiZXhwIjoyMTA0OTA0MTU1fQ.Id5N4NLkl1lYQ6OYBtLFu_WmAyqAQs84NBVub3bDK_U"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"external_id\": \"{{ $json.external_id }}\",\n  \"title\": \"{{ $json.title.replace(/\"/g, '\\\\\"') }}\",\n  \"company\": \"{{ $json.company.replace(/\"/g, '\\\\\"') }}\",\n  \"location\": \"{{ $json.location }}\",\n  \"source\": \"{{ $json.source }}\",\n  \"source_url\": \"{{ $json.source_url }}\",\n  \"published_at\": \"{{ $json.published_at }}\"\n}",
+        "options": {}
+      },
+      "id": "insert-job-offer",
+      "name": "7. Enregistrer dans Job Offers (Supabase)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://kabwfcmpobsljdyclxoa.supabase.co/rest/v1/matches?on_conflict=user_id,job_offer_id",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "YOUR_SUPABASE_SERVICE_ROLE_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthYndmY21wb2JzbGpkeWNseG9hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4OTMyODE1NSwiZXhwIjoyMTA0OTA0MTU1fQ.Id5N4NLkl1lYQ6OYBtLFu_WmAyqAQs84NBVub3bDK_U"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"user_id\": \"6222f82f-86ed-4af3-aab2-98bc754cba24\",\n  \"job_offer_id\": \"{{ $json.id || $json[0].id }}\",\n  \"score\": {{ $('6. Normaliser Données Supabase').item.json.score }},\n  \"status\": \"{{ $('6. Normaliser Données Supabase').item.json.status }}\"\n}",
+        "options": {}
+      },
+      "id": "insert-match",
+      "name": "8. Créer Match (Supabase Direct)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1720, 300]
+    }
+  ],
+  "connections": {
+    "1. Déclencheur Planifié (Toutes les 4h)": {
+      "main": [[{ "node": "2. Charger Profil Candidat (Supabase)", "type": "main", "index": 0 }]]
+    },
+    "2. Charger Profil Candidat (Supabase)": {
+      "main": [[{ "node": "3. Récupérer Offres (Arbeit Now)", "type": "main", "index": 0 }]]
+    },
+    "3. Récupérer Offres (Arbeit Now)": {
+      "main": [[{ "node": "4. Préparer pour l'IA", "type": "main", "index": 0 }]]
+    },
+    "4. Préparer pour l'IA": {
+      "main": [[{ "node": "5. Groq IA - Matching & Score", "type": "main", "index": 0 }]]
+    },
+    "5. Groq IA - Matching & Score": {
+      "main": [[{ "node": "6. Normaliser Données Supabase", "type": "main", "index": 0 }]]
+    },
+    "6. Normaliser Données Supabase": {
+      "main": [[{ "node": "7. Enregistrer dans Job Offers (Supabase)", "type": "main", "index": 0 }]]
+    },
+    "7. Enregistrer dans Job Offers (Supabase)": {
+      "main": [[{ "node": "8. Créer Match (Supabase Direct)", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
