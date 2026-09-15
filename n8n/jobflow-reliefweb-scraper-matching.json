@@ -176,6 +176,40 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [1720, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const offer = $('6. Normaliser Données Supabase').first().json;\n\nconst payload = {\n  username: 'JobFlow IA • Assistant Jacques Matoko',\n  avatar_url: 'https://cdn-icons-png.flaticon.com/512/4712/4712038.png',\n  embeds: [\n    {\n      title: `🎯 Offre Qualifiée : ${offer.title}`,\n      description: `Une opportunité à fort potentiel (${offer.score}% de compatibilité) a été sélectionnée pour votre profil.`,\n      color: 2450411,\n      fields: [\n        { name: '🏢 Entreprise', value: String(offer.company || 'Entreprise'), inline: true },\n        { name: '📍 Lieu', value: String(offer.location || 'Remote / International'), inline: true },\n        { name: '⭐ Score IA', value: `${offer.score}%`, inline: true },\n        { name: '✉️ Candidat Destinataire', value: 'jacks.matoko@gmail.com', inline: true },\n        { name: '🔗 Lien pour postuler', value: String(offer.source_url || 'https://www.arbeitnow.com'), inline: false },\n        { name: '📝 Lettre de motivation rédigée par l\\'IA', value: `Objet : Candidature ${offer.title}\\n\\nMadame, Monsieur,\\nFort de plus de 10 ans en management QHSE (ISO 9001/14001/45001) et expert en automatisation IA (N8N, Python), je vous soumets ma candidature pour dynamiser vos projets...\\n\\n— Jacques Alphonse Matoko (+242 05 302 8383)`, inline: false }\n      ],\n      footer: { text: 'JobFlow IA • Dossier complet prêt à être envoyé' },\n      timestamp: new Date().toISOString()\n    }\n  ]\n};\n\nreturn { json: payload };"
+      },
+      "id": "prepare-discord-msg",
+      "name": "9. Préparer Message Discord",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1940, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://discord.com/api/webhooks/1549198505887924257/-7GIcEGRdgz0KlKQ0WluEF57Ki8_J3e9W0LNdnX9pRUbTjmQEnXnmuEF2GNHjNPMiRiG",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "discord-notification",
+      "name": "10. Envoyer Alerte Discord",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2160, 300]
     }
   ],
   "connections": {
@@ -199,6 +233,12 @@
     },
     "7. Enregistrer dans Job Offers (Supabase)": {
       "main": [[{ "node": "8. Créer Match (Supabase Direct)", "type": "main", "index": 0 }]]
+    },
+    "8. Créer Match (Supabase Direct)": {
+      "main": [[{ "node": "9. Préparer Message Discord", "type": "main", "index": 0 }]]
+    },
+    "9. Préparer Message Discord": {
+      "main": [[{ "node": "10. Envoyer Alerte Discord", "type": "main", "index": 0 }]]
     }
   },
   "settings": {

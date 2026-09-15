@@ -7,17 +7,8 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   const data = await getDashboardData();
   return (
-    <main className="dashboard-shell">
-      <DashboardSidebar />
-      <div className="dashboard-main-wrapper">
-        <div className="dashboard-main">
-          <DashboardInteractiveView initialData={data} />
-          <footer className="dashboard-footer">
-            <span>Dernière synchronisation : {data.lastSyncedAt}</span>
-            <span>JobFlow v1.0 <i>·</i> Tous les systèmes opérationnels</span>
-          </footer>
-        </div>
-      </div>
+    <main style={{ minHeight: "100vh", background: "#f8fafc", padding: "20px 0 60px" }}>
+      <DashboardInteractiveView initialData={data} />
     </main>
   );
 }
