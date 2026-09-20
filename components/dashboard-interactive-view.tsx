@@ -7,6 +7,7 @@ export function DashboardInteractiveView({ initialData }: { initialData: Dashboa
   const [opportunities, setOpportunities] = useState<Opportunity[]>(initialData.opportunities);
   const [selectedOffer, setSelectedOffer] = useState<Opportunity | null>(opportunities[0] || null);
   const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<"candidature" | "relance">("candidature");
   const [isScanning, setIsScanning] = useState(false);
   const [statusNotice, setStatusNotice] = useState<string | null>(null);
 
@@ -34,6 +35,27 @@ ${userName}
 📞 +242 05 302 8383
 ✉️ ${userEmail}
 📍 Pointe-Noire, République du Congo · Disponible à distance & international`;
+  }
+
+  function generateFollowUp(offer: Opportunity) {
+    return `Objet : Relance — Candidature au poste de ${offer.role} chez ${offer.company}
+
+Madame, Monsieur,
+
+Je me permets de revenir vers vous avec courtoisie suite à ma candidature transmise la semaine dernière pour le poste de ${offer.role} (${offer.location}).
+
+Particulièrement enthousiasmé par les ambitions de ${offer.company}, je tiens à vous réitérer mon vif intérêt pour cette opportunité. 
+
+Mon profil pluridisciplinaire combinant le management QHSE (Master QHSE, normes ISO 9001/14001/45001), le pilotage de projets (MS Project MCA) et l'automatisation par l'IA (N8N, Python) me permettra d'être immédiatement opérationnel au sein de vos équipes.
+
+Restant à votre entière disposition pour convenir d'un entretien selon vos disponibilités, je vous remercie par avance pour l'attention portée à mon profil.
+
+Je vous prie d'agréer, Madame, Monsieur, mes sincères salutations.
+
+${userName}
+📞 +242 05 302 8383
+✉️ ${userEmail}
+📍 Pointe-Noire, République du Congo · Disponible immédiatement`;
   }
 
   function handleCopy(text: string) {
@@ -164,41 +186,80 @@ ${userName}
           </div>
         </div>
 
-        {/* Colonne Droite : Lettre de motivation sur-mesure */}
+        {/* Colonne Droite : Lettre de motivation & Relance Automatique J+7 */}
         {selectedOffer && (
           <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.03)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", paddingBottom: "12px", borderBottom: "1px solid #f1f5f9" }}>
+            
+            {/* Sélecteur d'onglets : Candidature vs Relance */}
+            <div style={{ display: "flex", gap: "8px", marginBottom: "16px", background: "#f8fafc", padding: "4px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+              <button
+                onClick={() => setActiveTab("candidature")}
+                style={{
+                  flex: 1,
+                  padding: "8px 12px",
+                  borderRadius: "6px",
+                  border: "none",
+                  fontWeight: 700,
+                  fontSize: "13px",
+                  cursor: "pointer",
+                  background: activeTab === "candidature" ? "#2563eb" : "transparent",
+                  color: activeTab === "candidature" ? "#ffffff" : "#64748b",
+                  transition: "all 0.15s"
+                }}
+              >
+                📝 1. Candidature Initiale
+              </button>
+              <button
+                onClick={() => setActiveTab("relance")}
+                style={{
+                  flex: 1,
+                  padding: "8px 12px",
+                  borderRadius: "6px",
+                  border: "none",
+                  fontWeight: 700,
+                  fontSize: "13px",
+                  cursor: "pointer",
+                  background: activeTab === "relance" ? "#dc2626" : "transparent",
+                  color: activeTab === "relance" ? "#ffffff" : "#64748b",
+                  transition: "all 0.15s"
+                }}
+              >
+                ⏰ 2. Relance Automatique (J+7)
+              </button>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px", paddingBottom: "10px", borderBottom: "1px solid #f1f5f9" }}>
               <div>
-                <span style={{ fontSize: "11px", fontWeight: 700, color: "#2563eb", fontFamily: "var(--mono)", textTransform: "uppercase" }}>
-                  Lettre de motivation générée par l&apos;IA
+                <span style={{ fontSize: "11px", fontWeight: 700, color: activeTab === "relance" ? "#dc2626" : "#2563eb", fontFamily: "var(--mono)", textTransform: "uppercase" }}>
+                  {activeTab === "relance" ? "⚡ Email de Relance IA (Sans réponse à J+7)" : "✨ Lettre de Motivation Personnalisée"}
                 </span>
-                <h3 style={{ fontSize: "17px", fontWeight: 700, color: "#0f172a", margin: "4px 0 0" }}>
+                <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", margin: "4px 0 0" }}>
                   {selectedOffer.role} chez {selectedOffer.company}
                 </h3>
               </div>
               <button
-                onClick={() => handleCopy(generateLetter(selectedOffer))}
-                style={{ background: "#2563eb", color: "#ffffff", border: "none", padding: "8px 14px", borderRadius: "6px", fontWeight: 600, fontSize: "13px", cursor: "pointer" }}
+                onClick={() => handleCopy(activeTab === "relance" ? generateFollowUp(selectedOffer) : generateLetter(selectedOffer))}
+                style={{ background: activeTab === "relance" ? "#dc2626" : "#2563eb", color: "#ffffff", border: "none", padding: "8px 14px", borderRadius: "6px", fontWeight: 600, fontSize: "13px", cursor: "pointer" }}
               >
-                {copied ? "✅ Copié !" : "📋 Copier la lettre"}
+                {copied ? "✅ Copié !" : activeTab === "relance" ? "📋 Copier la relance" : "📋 Copier la lettre"}
               </button>
             </div>
 
-            <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "16px", marginBottom: "18px" }}>
+            <div style={{ background: activeTab === "relance" ? "#fef2f2" : "#f8fafc", border: "1px solid", borderColor: activeTab === "relance" ? "#fecaca" : "#e2e8f0", borderRadius: "8px", padding: "16px", marginBottom: "18px" }}>
               <pre style={{ margin: 0, whiteSpace: "pre-wrap", fontFamily: "var(--sans)", fontSize: "13px", lineHeight: "1.6", color: "#1e293b" }}>
-                {generateLetter(selectedOffer)}
+                {activeTab === "relance" ? generateFollowUp(selectedOffer) : generateLetter(selectedOffer)}
               </pre>
             </div>
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: "12px", color: "#64748b" }}>
-                Prête à être envoyée au recruteur
+                {activeTab === "relance" ? "📌 Prêt à envoyer si le recruteur n'a pas répondu sous 7 jours" : "📌 Prête à être envoyée au recruteur"}
               </span>
               <a
-                href={selectedOffer.company.includes("Predium") ? "https://www.arbeitnow.com" : "https://www.arbeitnow.com"}
+                href={selectedOffer.sourceUrl || "https://www.arbeitnow.com"}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "#dc2626", color: "#ffffff", padding: "8px 16px", borderRadius: "6px", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}
+                style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "#0f172a", color: "#ffffff", padding: "8px 16px", borderRadius: "6px", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}
               >
                 🔗 Ouvrir l&apos;offre originale ↗
               </a>
