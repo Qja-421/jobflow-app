@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { DashboardData, Opportunity } from "../lib/types";
 
 export function DashboardInteractiveView({ initialData }: { initialData: DashboardData }) {
@@ -75,110 +76,114 @@ ${userName}
   }
 
   return (
-    <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "24px 16px" }}>
-      {/* En-tête personnel clair */}
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#ffffff", padding: "24px 28px", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 2px 4px rgba(0,0,0,0.04)", marginBottom: "24px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <div style={{ width: "52px", height: "52px", borderRadius: "50%", background: "#2563eb", color: "#ffffff", display: "grid", placeItems: "center", fontSize: "18px", fontWeight: 700, fontFamily: "var(--mono)" }}>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 font-sans">
+      {/* En-tête personnel clair & responsive */}
+      <header className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 mb-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-xl bg-blue-600 text-white font-mono font-bold flex items-center justify-center text-lg shrink-0 shadow-xs">
             JM
           </div>
           <div>
-            <h1 style={{ fontSize: "22px", fontWeight: 700, color: "#0f172a", margin: 0 }}>
-              {userName}
-            </h1>
-            <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "13px" }}>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">
+                {userName}
+              </h1>
+              <Link href="/" className="text-xs text-blue-600 hover:underline font-medium">
+                ← Accueil
+              </Link>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
               {userRole}
             </p>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "20px", background: "#fef2f2", border: "1px solid #fecaca", color: "#dc2626", fontSize: "12px", fontWeight: 700, fontFamily: "var(--mono)" }}>
-            <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#dc2626" }} />
+        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 border border-red-200 text-red-700 text-xs font-mono font-bold">
+            <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
             ROBOT IA ACTIF 24/7
           </span>
           <button
             onClick={handleTriggerScan}
             disabled={isScanning}
-            style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "#2563eb", color: "#ffffff", border: "none", padding: "10px 18px", borderRadius: "8px", fontWeight: 600, fontSize: "14px", cursor: "pointer", transition: "all 0.2s" }}
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
           >
-            {isScanning ? "⏳ Scan en cours..." : "🔄 Lancer un scan d'offres"}
+            {isScanning ? "⏳ Scan en cours..." : "🔄 Lancer un scan"}
           </button>
         </div>
       </header>
 
       {/* Notification de statut */}
       {statusNotice && (
-        <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1d4ed8", padding: "14px 20px", borderRadius: "8px", marginBottom: "20px", fontSize: "14px", fontWeight: 600, display: "flex", alignItems: "center", gap: "10px" }}>
+        <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-xl mb-6 text-sm font-medium flex items-center gap-2.5 animate-fade-in">
           <span>💡</span> {statusNotice}
         </div>
       )}
 
       {/* Cartes de destination des alertes */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "24px" }}>
-        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "18px 20px", display: "flex", alignItems: "center", gap: "14px" }}>
-          <div style={{ fontSize: "28px" }}>✉️</div>
-          <div>
-            <strong style={{ display: "block", fontSize: "14px", color: "#0f172a" }}>Boîte Gmail connectée</strong>
-            <span style={{ color: "#2563eb", fontSize: "13px", fontWeight: 500 }}>{userEmail}</span>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex items-center gap-3.5 shadow-xs">
+          <div className="text-2xl sm:text-3xl shrink-0">✉️</div>
+          <div className="min-w-0">
+            <strong className="block text-xs sm:text-sm text-slate-900 truncate font-semibold">Boîte Gmail connectée</strong>
+            <span className="text-blue-600 text-xs sm:text-sm font-medium truncate block">{userEmail}</span>
           </div>
         </div>
 
-        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "18px 20px", display: "flex", alignItems: "center", gap: "14px" }}>
-          <div style={{ fontSize: "28px" }}>💬</div>
-          <div>
-            <strong style={{ display: "block", fontSize: "14px", color: "#0f172a" }}>Salon Discord connecté</strong>
-            <span style={{ color: "#16a34a", fontSize: "13px", fontWeight: 500 }}>#général (Serveur_Queja421) ✅ Connecté</span>
+        <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex items-center gap-3.5 shadow-xs">
+          <div className="text-2xl sm:text-3xl shrink-0">💬</div>
+          <div className="min-w-0">
+            <strong className="block text-xs sm:text-sm text-slate-900 truncate font-semibold">Salon Discord connecté</strong>
+            <span className="text-emerald-600 text-xs sm:text-sm font-medium truncate block">#général (Serveur_Queja421) ✅ Connecté</span>
           </div>
         </div>
       </div>
 
-      {/* Section Principale : Liste des offres & Lettre générée */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.3fr", gap: "24px" }}>
+      {/* Section Principale Responsive : Grille 1 colonne sur mobile, 2 colonnes sur grand écran */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* Colonne Gauche : Offres détectées */}
-        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.03)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", paddingBottom: "12px", borderBottom: "1px solid #f1f5f9" }}>
-            <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", margin: 0 }}>
-              📋 Offres ciblées pour vous ({opportunities.length})
+        {/* Colonne Gauche (40% desktop, 100% mobile) : Offres détectées */}
+        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col">
+          <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900">
+              📋 Offres ciblées ({opportunities.length})
             </h2>
-            <span style={{ fontSize: "12px", color: "#64748b", fontFamily: "var(--mono)" }}>Triées par score IA</span>
+            <span className="text-xs text-slate-500 font-mono">Triées par score IA</span>
           </div>
 
-          <div style={{ display: "grid", gap: "10px" }}>
+          <div className="space-y-3 overflow-y-auto max-h-[560px] pr-1">
             {opportunities.map((offer) => {
               const isSelected = selectedOffer?.id === offer.id;
               return (
                 <div
                   key={offer.id}
                   onClick={() => setSelectedOffer(offer)}
-                  style={{
-                    padding: "16px",
-                    borderRadius: "8px",
-                    border: "2px solid",
-                    borderColor: isSelected ? "#2563eb" : "#f1f5f9",
-                    background: isSelected ? "#eff6ff" : "#ffffff",
-                    cursor: "pointer",
-                    transition: "all 0.15s"
-                  }}
+                  className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                    isSelected
+                      ? "border-blue-600 bg-blue-50/70 shadow-xs"
+                      : "border-slate-100 hover:border-slate-300 bg-white"
+                  }`}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
-                    <div>
-                      <strong style={{ fontSize: "15px", color: "#0f172a", display: "block" }}>
-                        {offer.role}
-                      </strong>
-                      <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "13px" }}>
-                        🏢 {offer.company} · 📍 {offer.location}
-                      </p>
-                    </div>
-                    <span style={{ background: offer.score >= 90 ? "#f0fdf4" : "#eff6ff", color: offer.score >= 90 ? "#16a34a" : "#2563eb", border: "1px solid", borderColor: offer.score >= 90 ? "#bbf7d0" : "#bfdbfe", padding: "4px 8px", borderRadius: "6px", fontSize: "12px", fontWeight: 700, fontFamily: "var(--mono)", whiteSpace: "nowrap" }}>
+                  <div className="flex justify-between items-start gap-2 mb-2">
+                    <strong className="text-sm sm:text-base font-bold text-slate-900 leading-snug">
+                      {offer.role}
+                    </strong>
+                    <span className={`px-2 py-0.5 rounded-md text-xs font-bold font-mono shrink-0 border ${
+                      offer.score >= 90
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : "bg-blue-50 text-blue-700 border-blue-200"
+                    }`}>
                       ⭐ {offer.score}%
                     </span>
                   </div>
 
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px", paddingTop: "8px", borderTop: "1px solid #e2e8f0", fontSize: "12px", color: "#94a3b8" }}>
+                  <p className="text-xs sm:text-sm text-slate-600 mb-3">
+                    🏢 {offer.company} · 📍 {offer.location}
+                  </p>
+
+                  <div className="flex justify-between items-center pt-2 border-t border-slate-100 text-xs text-slate-400">
                     <span>Source : {offer.source}</span>
-                    <span style={{ color: "#2563eb", fontWeight: 600 }}>Voir la lettre →</span>
+                    <span className="text-blue-600 font-semibold">Voir la lettre →</span>
                   </div>
                 </div>
               );
@@ -186,80 +191,73 @@ ${userName}
           </div>
         </div>
 
-        {/* Colonne Droite : Lettre de motivation & Relance Automatique J+7 */}
+        {/* Colonne Droite (60% desktop, 100% mobile) : Lettre & Relance J+7 */}
         {selectedOffer && (
-          <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.03)" }}>
+          <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col">
             
-            {/* Sélecteur d'onglets : Candidature vs Relance */}
-            <div style={{ display: "flex", gap: "8px", marginBottom: "16px", background: "#f8fafc", padding: "4px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+            {/* Sélecteur d'onglets responsive */}
+            <div className="grid grid-cols-2 gap-2 mb-4 bg-slate-100 p-1 rounded-xl">
               <button
                 onClick={() => setActiveTab("candidature")}
-                style={{
-                  flex: 1,
-                  padding: "8px 12px",
-                  borderRadius: "6px",
-                  border: "none",
-                  fontWeight: 700,
-                  fontSize: "13px",
-                  cursor: "pointer",
-                  background: activeTab === "candidature" ? "#2563eb" : "transparent",
-                  color: activeTab === "candidature" ? "#ffffff" : "#64748b",
-                  transition: "all 0.15s"
-                }}
+                className={`py-2 px-3 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                  activeTab === "candidature"
+                    ? "bg-blue-600 text-white shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
               >
                 📝 1. Candidature Initiale
               </button>
               <button
                 onClick={() => setActiveTab("relance")}
-                style={{
-                  flex: 1,
-                  padding: "8px 12px",
-                  borderRadius: "6px",
-                  border: "none",
-                  fontWeight: 700,
-                  fontSize: "13px",
-                  cursor: "pointer",
-                  background: activeTab === "relance" ? "#dc2626" : "transparent",
-                  color: activeTab === "relance" ? "#ffffff" : "#64748b",
-                  transition: "all 0.15s"
-                }}
+                className={`py-2 px-3 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                  activeTab === "relance"
+                    ? "bg-red-600 text-white shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
               >
-                ⏰ 2. Relance Automatique (J+7)
+                ⏰ 2. Relance (J+7)
               </button>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px", paddingBottom: "10px", borderBottom: "1px solid #f1f5f9" }}>
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-3 pb-3 border-b border-slate-100">
               <div>
-                <span style={{ fontSize: "11px", fontWeight: 700, color: activeTab === "relance" ? "#dc2626" : "#2563eb", fontFamily: "var(--mono)", textTransform: "uppercase" }}>
+                <span className={`text-xs font-mono font-bold uppercase ${
+                  activeTab === "relance" ? "text-red-600" : "text-blue-600"
+                }`}>
                   {activeTab === "relance" ? "⚡ Email de Relance IA (Sans réponse à J+7)" : "✨ Lettre de Motivation Personnalisée"}
                 </span>
-                <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", margin: "4px 0 0" }}>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 mt-0.5">
                   {selectedOffer.role} chez {selectedOffer.company}
                 </h3>
               </div>
               <button
                 onClick={() => handleCopy(activeTab === "relance" ? generateFollowUp(selectedOffer) : generateLetter(selectedOffer))}
-                style={{ background: activeTab === "relance" ? "#dc2626" : "#2563eb", color: "#ffffff", border: "none", padding: "8px 14px", borderRadius: "6px", fontWeight: 600, fontSize: "13px", cursor: "pointer" }}
+                className={`self-start sm:self-auto px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-white shadow-xs cursor-pointer transition-colors ${
+                  activeTab === "relance" ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"
+                }`}
               >
                 {copied ? "✅ Copié !" : activeTab === "relance" ? "📋 Copier la relance" : "📋 Copier la lettre"}
               </button>
             </div>
 
-            <div style={{ background: activeTab === "relance" ? "#fef2f2" : "#f8fafc", border: "1px solid", borderColor: activeTab === "relance" ? "#fecaca" : "#e2e8f0", borderRadius: "8px", padding: "16px", marginBottom: "18px" }}>
-              <pre style={{ margin: 0, whiteSpace: "pre-wrap", fontFamily: "var(--sans)", fontSize: "13px", lineHeight: "1.6", color: "#1e293b" }}>
+            {/* Zone de texte de la lettre */}
+            <div className={`rounded-xl p-4 sm:p-5 mb-4 border grow overflow-y-auto max-h-[420px] ${
+              activeTab === "relance" ? "bg-red-50/50 border-red-200" : "bg-slate-50 border-slate-200"
+            }`}>
+              <pre className="font-sans text-xs sm:text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">
                 {activeTab === "relance" ? generateFollowUp(selectedOffer) : generateLetter(selectedOffer)}
               </pre>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "12px", color: "#64748b" }}>
-                {activeTab === "relance" ? "📌 Prêt à envoyer si le recruteur n'a pas répondu sous 7 jours" : "📌 Prête à être envoyée au recruteur"}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-2">
+              <span className="text-xs text-slate-500">
+                {activeTab === "relance" ? "📌 Prêt à envoyer si aucune réponse sous 7 jours" : "📌 Prête à être envoyée au recruteur"}
               </span>
               <a
                 href={selectedOffer.sourceUrl || "https://www.arbeitnow.com"}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "#0f172a", color: "#ffffff", padding: "8px 16px", borderRadius: "6px", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors"
               >
                 🔗 Ouvrir l&apos;offre originale ↗
               </a>
