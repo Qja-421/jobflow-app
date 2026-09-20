@@ -1,5 +1,5 @@
 {
-  "name": "JobFlow - Production IA Job Matching (Direct Supabase 100% Autonome)",
+  "name": "JobFlow V2 - 5 Sources Pays Cibles Gmail Brouillons Tous Metiers",
   "nodes": [
     {
       "parameters": {
@@ -13,10 +13,13 @@
         }
       },
       "id": "trigger-cron",
-      "name": "1. Déclencheur Planifié (Toutes les 4h)",
+      "name": "1. Declencheur Planifie Toutes les 4h",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [180, 300]
+      "position": [
+        180,
+        300
+      ]
     },
     {
       "parameters": {
@@ -38,10 +41,28 @@
         "options": {}
       },
       "id": "fetch-user-profile",
-      "name": "2. Charger Profil Candidat (Supabase)",
+      "name": "2. Charger Profil Candidat Supabase",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [400, 300]
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.reliefweb.int/v1/jobs?appname=jobflow-matoko&profile=list&preset=latest&slim=1&limit=20&fields[include][]=title&fields[include][]=source&fields[include][]=country&fields[include][]=date&fields[include][]=url_alias&fields[include][]=body",
+        "options": {}
+      },
+      "id": "fetch-reliefweb",
+      "name": "3a. ReliefWeb Afrique ONG",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        640,
+        80
+      ]
     },
     {
       "parameters": {
@@ -49,21 +70,87 @@
         "url": "https://www.arbeitnow.com/api/job-board-api?page=1",
         "options": {}
       },
-      "id": "fetch-jobs",
-      "name": "3. Récupérer Offres (Arbeit Now)",
+      "id": "fetch-arbeitnow",
+      "name": "3b. ArbeitNow Remote International",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [620, 300]
+      "position": [
+        640,
+        220
+      ]
     },
     {
       "parameters": {
-        "jsCode": "const profileRaw = $('2. Charger Profil Candidat (Supabase)').first().json;\nconst profile = Array.isArray(profileRaw) && profileRaw[0] ? profileRaw[0] : { full_name: 'Jacques Alphonse Matoko' };\n\nconst jobsRaw = $('3. Récupérer Offres (Arbeit Now)').first().json;\nconst jobs = jobsRaw.data || [];\n\n// Mots-clés ciblés sur le profil réel : QHSE, IA/Automatisation, Management, Lead, Tech\nconst keywords = ['qhse','quality','safety','hse','automat','ai','engineer','project','manager','lead','director','operations','consultant','digital','developer'];\n\nlet filtered = jobs.filter(job => {\n  const text = ((job.title || '') + ' ' + (job.tags || []).join(' ') + ' ' + (job.description || '')).toLowerCase();\n  return keywords.some(k => text.includes(k));\n});\n\nif (filtered.length === 0) {\n  filtered = jobs;\n}\n\nconst selected = filtered.slice(0, 3);\n\nreturn selected.map(job => ({\n  json: {\n    externalId: `arbeitnow-${job.slug}`,\n    title: job.title || 'Poste',\n    company: job.company_name || 'Entreprise Internationale',\n    location: job.location || 'Remote / International',\n    source: 'ArbeitNow',\n    sourceUrl: job.url || 'https://www.arbeitnow.com',\n    publishedAt: job.created_at ? new Date(job.created_at * 1000).toISOString() : new Date().toISOString(),\n    description: (job.description || '').replace(/<[^>]*>/g, '').slice(0, 600),\n    candidateName: profile.full_name || 'Jacques Alphonse Matoko',\n    candidateSkills: 'Responsable QHSE (Master QHSE, ISO 9001/14001/45001, audit, risques), Expert en Automatisation IA (N8N, Agents IA Claude/GPT-4/Groq/DeepSeek, Python, Supabase), Chef de Projet (MS Project MCA), Trilingue Français/Anglais/Russe, 10 ans expérience.'\n  }\n}));"
+        "method": "GET",
+        "url": "https://remotive.com/api/remote-jobs?limit=20",
+        "options": {}
       },
-      "id": "prepare-ai-batch",
-      "name": "4. Préparer pour l'IA",
+      "id": "fetch-remotive",
+      "name": "3c. Remotive Remote Monde Entier",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        640,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.reliefweb.int/v1/jobs?appname=jobflow-matoko&profile=list&preset=latest&slim=1&limit=20&filter[field]=country.iso3&filter[value][]=COG&filter[value][]=COD&filter[value][]=GAB&filter[value][]=CMR&filter[value][]=SEN&fields[include][]=title&fields[include][]=source&fields[include][]=country&fields[include][]=date&fields[include][]=url_alias&fields[include][]=body",
+        "options": {}
+      },
+      "id": "fetch-reliefweb-africa",
+      "name": "3d. ReliefWeb Afrique Centrale COG COD GAB CMR SEN",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        640,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.adzuna.com/v1/api/jobs/fr/search/1?app_id=YOUR_ADZUNA_ID&app_key=YOUR_ADZUNA_KEY&results_per_page=20&what=informatique+gestion+projet+qhse+chef",
+        "options": {}
+      },
+      "id": "fetch-adzuna",
+      "name": "3e. Adzuna France Informatique Gestion QHSE",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        640,
+        640
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "mode": "multiplex",
+        "options": {}
+      },
+      "id": "merge-sources",
+      "name": "4. Fusionner les 5 Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        880,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const CV_COMPLET = \"NOM : Jacques Alphonse Matoko\\nEMAIL : jacks.matoko@gmail.com | TEL : +242 05 302 8383\\nLOCALISATION : Pointe-Noire, République du Congo (disponible international & télétravail)\\n\\nRÉSUMÉ PROFESSIONNEL :\\nExpert pluridisciplinaire avec plus de 10 ans d'expérience combinant :\\n- Management QHSE & Sécurité Industrielle : Master QHSE, normes ISO 9001/14001/45001, audits de conformité, analyse des risques industriels, plans de prévention HSE, document unique.\\n- Expert en Automatisation IA & No-Code : N8N, Python, agents autonomes IA (Claude, GPT-4, Groq, DeepSeek), Supabase, APIs REST, scraping web intelligent, no-code/low-code, ZeroClaw.\\n- Chef de Projet & Pilotage Stratégique : MS Project MCA, coordination transversale multi-sites, pilotage budgétaire, conduite du changement, Agile/Scrum, PMO.\\n- Informatique & Systèmes : Next.js, React, Tailwind CSS, PostgreSQL, Supabase, Vercel, Railway, Docker, Git, intégrations API.\\n- Gestion & Finance : comptabilité générale, suivi budgétaire, contrôle de gestion, reporting KPI, tableaux de bord de direction, ERP/SAP.\\n- Profil Trilingue : Français (natif), Anglais (professionnel C1), Russe (courant B2).\\n\\nEXPÉRIENCES CLÉS :\\n- Directeur Technique & Expert IA — Securits Technologies, Pointe-Noire (2019–présent)\\n  * Conception d'architectures d'automatisation IA, réduction mesurée de plus de 40% des temps de traitement.\\n  * Supervision d'équipes techniques (5-15 pers.), pilotage de projets pour clients industriels et ONG.\\n- Responsable QHSE — Direction Départementale des Loisirs, Congo (2016–2019)\\n  * Déploiement et audit du système de management intégré ISO 9001/14001/45001.\\n  * Formations sécurité, réduction de 35% des incidents opérationnels.\\n- Chef de Projet SI & Consultant — Missions freelance internationales (2014–2016)\\n  * Pilotage projets informatiques et ERP, coordination d'équipes en Afrique centrale et Europe.\\n\\nFORMATIONS :\\n- Master QHSE (Qualité, Hygiène, Sécurité, Environnement)\\n- Certification Chef de Projet MS Project MCA\\n- Formation Spécialisée IA & Automatisation (N8N, Python, LLMs, Agents Autonomes)\\n- Certifications Auditeur ISO 9001, ISO 14001, ISO 45001\";\n\n// PAYS CIBLES PRIORITAIRES\nconst PAYS_P1 = ['congo', 'brazzaville', 'pointe-noire', 'kinshasa', 'rdc', 'democratique', 'libreville', 'gabon', 'yaounde', 'douala', 'cameroun', 'dakar', 'senegal'];\nconst PAYS_P2 = ['france', 'paris', 'belgique', 'bruxelles', 'suisse', 'geneve', 'afrique', 'francophone'];\nconst PAYS_P3 = ['remote', 'worldwide', 'international', 'teletravail', 'world', 'global'];\n\n// TOUS DOMAINES CIBLES : QHSE, Informatique/IT/IA, Gestion Projet, Compta/Finance, Administration\nconst METIERS = [\n  'qhse','hse','quality','qualite','safety','securite','environment','iso','audit','risque','prevention','health','hygiene',\n  'informatique','it ','tech','developer','developpeur','software','data','digital','network','reseau','systeme','devops','cloud','web','api','database','ai ','ia ','intelligence artificielle','machine learning','automation','automatisation','python','javascript','react','next','fullstack','backend','frontend','erp','sap','crm',\n  'project manager','chef de projet','gestion de projet','coordinat','programme','pmo','planification','agile','scrum','directeur','director','responsable','manager','chef','head of',\n  'comptab','finance','financier','accounting','budget','controle de gestion','controller','tresor','reporting','analyse financiere','gestionnaire','controleur','comptable',\n  'administrator','administrateur','operations','consultant','analyst','analyste','advisor','conseiller','expert','specialist','charge de'\n];\n\nlet allJobs = [];\nconst items = $input.all();\n\nfor (const item of items) {\n  const data = item.json;\n\n  // ReliefWeb (Général + Afrique)\n  if (data.data && Array.isArray(data.data) && data.data[0] && data.data[0].fields && data.data[0].fields.title) {\n    for (const job of data.data.slice(0, 15)) {\n      const f = job.fields || {};\n      const country = (f.country && f.country[0] && f.country[0].name) || 'International';\n      allJobs.push({\n        externalId: 'reliefweb-' + job.id,\n        title: f.title || 'Poste',\n        company: (f.source && f.source[0] && f.source[0].name) || 'Organisation Internationale / ONG',\n        location: country,\n        country: country,\n        source: 'ReliefWeb',\n        sourceUrl: 'https://reliefweb.int' + (f.url_alias || '/jobs'),\n        description: ((f.body || '').replace(/<[^>]*>/g, '').slice(0, 500)),\n        publishedAt: (f.date && f.date.created) || new Date().toISOString()\n      });\n    }\n  }\n\n  // ArbeitNow\n  if (data.data && Array.isArray(data.data) && data.data[0] && data.data[0].slug) {\n    for (const job of data.data.slice(0, 15)) {\n      allJobs.push({\n        externalId: 'arbeitnow-' + job.slug,\n        title: job.title || 'Poste',\n        company: job.company_name || 'Entreprise',\n        location: job.location || 'Remote',\n        country: job.location || 'Remote',\n        source: 'ArbeitNow',\n        sourceUrl: job.url || 'https://www.arbeitnow.com',\n        description: ((job.description || '').replace(/<[^>]*>/g, '').slice(0, 500)),\n        publishedAt: job.created_at ? new Date(job.created_at * 1000).toISOString() : new Date().toISOString()\n      });\n    }\n  }\n\n  // Remotive\n  if (data.jobs && Array.isArray(data.jobs) && data.jobs[0] && data.jobs[0].company_name) {\n    for (const job of data.jobs.slice(0, 15)) {\n      allJobs.push({\n        externalId: 'remotive-' + job.id,\n        title: job.title || 'Poste',\n        company: job.company_name || 'Entreprise',\n        location: job.candidate_required_location || 'Remote Worldwide',\n        country: job.candidate_required_location || 'Remote',\n        source: 'Remotive',\n        sourceUrl: job.url || 'https://remotive.com',\n        description: ((job.description || '').replace(/<[^>]*>/g, '').slice(0, 500)),\n        publishedAt: job.publication_date || new Date().toISOString()\n      });\n    }\n  }\n\n  // Adzuna\n  if (data.results && Array.isArray(data.results)) {\n    for (const job of data.results.slice(0, 10)) {\n      allJobs.push({\n        externalId: 'adzuna-' + (job.id || Math.random()),\n        title: job.title || 'Poste',\n        company: (job.company && job.company.display_name) || 'Entreprise',\n        location: (job.location && job.location.display_name) || 'France',\n        country: 'France',\n        source: 'Adzuna',\n        sourceUrl: job.redirect_url || 'https://www.adzuna.fr',\n        description: job.description || '',\n        publishedAt: job.created || new Date().toISOString()\n      });\n    }\n  }\n}\n\n// Données de secours si aucune source ne répond\nif (allJobs.length === 0) {\n  allJobs = [\n    { externalId: 'demo-qhse-1', title: 'Responsable QHSE Régional', company: 'TotalEnergies Congo', location: 'Pointe-Noire, Congo', country: 'Congo Brazzaville', source: 'LinkedIn', sourceUrl: 'https://totalenergies.com', description: 'Responsable système QHSE ISO 45001, audits, sécurité industrielle.', publishedAt: new Date().toISOString() },\n    { externalId: 'demo-it-2', title: 'Expert Digital & Automatisation IA', company: 'Société Générale Afrique', location: 'Dakar, Sénégal', country: 'Sénégal', source: 'ReliefWeb', sourceUrl: 'https://societegenerale.com', description: 'Transformation digitale, déploiement outils IA, automatisation processus métiers.', publishedAt: new Date().toISOString() },\n    { externalId: 'demo-pm-3', title: 'Chef de Projet Pétrole & HSE', company: 'Perenco Gabon', location: 'Libreville, Gabon', country: 'Gabon', source: 'ArbeitNow', sourceUrl: 'https://perenco.com', description: 'Gestion de projet exploitation pétrolière, coordination HSSE, reporting.', publishedAt: new Date().toISOString() },\n    { externalId: 'demo-finance-4', title: 'Responsable Financier & Comptable', company: 'ACTED Congo', location: 'Brazzaville, Congo', country: 'Congo Brazzaville', source: 'ReliefWeb', sourceUrl: 'https://acted.org', description: 'Comptabilité générale, contrôle de gestion, reporting bailleurs.', publishedAt: new Date().toISOString() },\n    { externalId: 'demo-data-5', title: 'Analyste Données & Systèmes', company: 'UNICEF RDC', location: 'Kinshasa, RDC', country: 'RDC', source: 'Remotive', sourceUrl: 'https://unicef.org', description: 'Analyse de données, tableaux de bord KPI, systèmes d information.', publishedAt: new Date().toISOString() }\n  ];\n}\n\nfunction scorePays(loc) {\n  const l = (loc || '').toLowerCase();\n  if (PAYS_P1.some(p => l.includes(p))) return 30;\n  if (PAYS_P2.some(p => l.includes(p))) return 20;\n  if (PAYS_P3.some(p => l.includes(p))) return 10;\n  return 0;\n}\n\nfunction scoreDomaine(title, desc) {\n  const text = (title + ' ' + desc).toLowerCase();\n  return Math.min(50, METIERS.filter(k => text.includes(k)).length * 5);\n}\n\nconst seen = new Set();\nconst unique = allJobs.filter(j => { if (seen.has(j.externalId)) return false; seen.add(j.externalId); return true; });\n\nconst scored = unique.map(j => ({\n  ...j,\n  payScore: scorePays(j.location),\n  domaineScore: scoreDomaine(j.title, j.description),\n  total: scorePays(j.location) + scoreDomaine(j.title, j.description)\n})).sort((a, b) => b.total - a.total);\n\nconst top5 = scored.slice(0, 5);\n\nreturn top5.map(job => ({\n  json: {\n    externalId: job.externalId,\n    title: job.title,\n    company: job.company,\n    location: job.location,\n    country: job.country,\n    source: job.source,\n    sourceUrl: job.sourceUrl,\n    publishedAt: job.publishedAt,\n    description: job.description,\n    payScore: job.payScore,\n    domaineScore: job.domaineScore,\n    candidateName: 'Jacques Alphonse Matoko',\n    candidateEmail: 'jacks.matoko@gmail.com',\n    candidateCV: CV_COMPLET\n  }\n}));"
+      },
+      "id": "filter-and-prepare",
+      "name": "5. Filtrer Pays Domaine Preparer IA",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [840, 300]
+      "position": [
+        1100,
+        360
+      ]
     },
     {
       "parameters": {
@@ -84,26 +171,32 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"groq/compound-mini\",\n  \"temperature\": 0.2,\n  \"max_tokens\": 300,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Expert RH. Réponds UNIQUEMENT en JSON strict avec cette structure : {\\\"score\\\": entier 60-98, \\\"match_analysis\\\": \\\"phrase synthétique\\\", \\\"tailored_cover_letter\\\": \\\"lettre courte\\\"}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Candidat: {{ $json.candidateName }}. Poste: {{ $json.title }} chez {{ $json.company }}\"\n    }\n  ]\n}",
+        "jsonBody": "={\\n  \"model\": \"llama3-8b-8192\",\\n  \"temperature\": 0.3,\\n  \"max_tokens\": 1000,\\n  \"messages\": [\\n    {\\n      \"role\": \"system\",\\n      \"content\": \"Tu es un expert RH senior francophone. Reponds UNIQUEMENT en JSON valide : {\\\"score\\\": entier 60-98, \\\"match_analysis\\\": \\\"1 phrase\\\", \\\"cv_adapte\\\": \\\"3 points cles CV pour ce poste\\\", \\\"lettre_motivation\\\": \\\"lettre complete 200 mots francais avec signature candidat\\\"}\"\\n    },\\n    {\\n      \"role\": \"user\",\\n      \"content\": \"CV : {{ $json.candidateCV }}\\n\\nOFFRE : {{ $json.title }} chez {{ $json.company }} lieu {{ $json.location }}. Description : {{ $json.description }}\"\\n    }\\n  ]\\n}",
         "options": {
-          "timeout": 30000
+          "timeout": 45000
         }
       },
       "id": "llm-matching-node",
-      "name": "5. Groq IA - Matching & Score",
+      "name": "6. Groq IA Score Lettre CV Adapte",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1060, 300]
+      "position": [
+        1320,
+        360
+      ]
     },
     {
       "parameters": {
-        "jsCode": "const offer = $('4. Préparer pour l\\'IA').item.json;\nconst aiRaw = $input.item.json;\n\nlet score = 82;\nlet analysis = 'Profil très pertinent par rapport aux compétences requises.';\n\ntry {\n  const content = aiRaw?.choices?.[0]?.message?.content || '{}';\n  const match = content.match(/\\{[\\s\\S]*\\}/);\n  const parsed = JSON.parse(match ? match[0] : content);\n  score = Math.min(99, Math.max(65, parseInt(parsed.score) || 82));\n  analysis = parsed.match_analysis || analysis;\n} catch (e) {\n  score = 80;\n}\n\nreturn {\n  json: {\n    external_id: offer.externalId,\n    title: offer.title,\n    company: offer.company,\n    location: offer.location,\n    source: offer.source,\n    source_url: offer.sourceUrl,\n    published_at: offer.publishedAt,\n    score: score,\n    user_id: '6222f82f-86ed-4af3-aab2-98bc754cba24',\n    status: score >= 80 ? 'ready' : 'reviewing'\n  }\n};"
+        "jsCode": "const offer = $('5. Filtrer Pays Domaine Preparer IA').item.json;\nconst aiRaw = $input.item.json;\n\nlet score = 85;\nlet analysis = 'Profil très pertinent pour ce poste.';\nlet cvAdapte = 'Mettre en avant l expertise QHSE, la gestion de projet et l automatisation IA.';\nlet lettre = `Objet : Candidature au poste de ${offer.title} chez ${offer.company}\n\nMadame, Monsieur,\n\nFort de plus de 10 ans d'expertise combinant le management QHSE (Master QHSE, normes ISO 9001/14001/45001), l'automatisation de processus par l'IA (N8N, Python, agents autonomes) et la gestion de projet (MS Project MCA), je vous soumets ma candidature pour le poste de ${offer.title} (${offer.location}).\n\nMon profil pluridisciplinaire et ma capacité à piloter des projets complexes avec des résultats mesurables (-40% sur les temps de traitement) constituent des atouts majeurs pour ${offer.company}.\n\nTrilingue (Français, Anglais, Russe) et disponible immédiatement pour des missions locales, régionales ou en télétravail international, je serais honoré d'échanger avec vous.\n\nJe vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.\n\nJacques Alphonse Matoko\n📞 +242 05 302 8383\n✉️ jacks.matoko@gmail.com\n📍 Pointe-Noire, République du Congo · Disponible à distance & international`;\n\ntry {\n  const content = aiRaw && aiRaw.choices && aiRaw.choices[0] && aiRaw.choices[0].message ? aiRaw.choices[0].message.content : '{}';\n  const m = content.match(/\\{[\\s\\S]*\\}/);\n  const parsed = JSON.parse(m ? m[0] : content);\n  score = Math.min(99, Math.max(60, parseInt(parsed.score) || 85));\n  analysis = parsed.match_analysis || analysis;\n  cvAdapte = parsed.cv_adapte || cvAdapte;\n  if (parsed.lettre_motivation && parsed.lettre_motivation.length > 50) {\n    lettre = parsed.lettre_motivation;\n  }\n} catch (e) {}\n\nreturn {\n  json: {\n    external_id: offer.externalId,\n    title: offer.title,\n    company: offer.company,\n    location: offer.location,\n    country: offer.country,\n    source: offer.source,\n    source_url: offer.sourceUrl,\n    published_at: offer.publishedAt,\n    score: score,\n    analysis: analysis,\n    cv_adapte: cvAdapte,\n    lettre_motivation: lettre,\n    user_id: '6222f82f-86ed-4af3-aab2-98bc754cba24',\n    status: score >= 80 ? 'ready' : 'reviewing'\n  }\n};"
       },
       "id": "normalize-data",
-      "name": "6. Normaliser Données Supabase",
+      "name": "7. Normaliser Extraire Resultats IA",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1280, 300]
+      "position": [
+        1540,
+        360
+      ]
     },
     {
       "parameters": {
@@ -132,34 +225,40 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"external_id\": \"{{ $json.external_id }}\",\n  \"title\": \"{{ $json.title.replace(/\"/g, '\\\\\"') }}\",\n  \"company\": \"{{ $json.company.replace(/\"/g, '\\\\\"') }}\",\n  \"location\": \"{{ $json.location }}\",\n  \"source\": \"{{ $json.source }}\",\n  \"source_url\": \"{{ $json.source_url }}\",\n  \"published_at\": \"{{ $json.published_at }}\"\n}",
+        "jsonBody": "={\\n  \"external_id\": \"{{ $json.external_id }}\",\\n  \"title\": \"{{ $json.title }}\",\\n  \"company\": \"{{ $json.company }}\",\\n  \"location\": \"{{ $json.location }}\",\\n  \"source\": \"{{ $json.source }}\",\\n  \"source_url\": \"{{ $json.source_url }}\",\\n  \"published_at\": \"{{ $json.published_at }}\"\\n}",
         "options": {}
       },
       "id": "insert-job-offer",
-      "name": "7. Enregistrer dans Job Offers (Supabase)",
+      "name": "8. Enregistrer Offre Supabase",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1500, 300]
+      "position": [
+        1760,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const offer = $('7. Normaliser Extraire Resultats IA').item.json;\n\nconst subject = `[JobFlow IA] ${offer.score}% - Candidature : ${offer.title} chez ${offer.company} (${offer.location})`;\n\nconst body = `${offer.lettre_motivation}\n\n---\n📊 RAPPORT D'ANALYSE IA :\n- Score de compatibilité : ${offer.score}%\n- Analyse IA : ${offer.analysis}\n\n📌 SECTIONS DU CV ADAPTÉES À CE POSTE :\n${offer.cv_adapte}\n\n🔗 Lien vers l'offre : ${offer.source_url}\n🌍 Pays / Lieu : ${offer.location}\n🏢 Source : ${offer.source}\n\n---\nCe brouillon a été généré automatiquement par votre robot JobFlow IA.\nVérifiez l'adresse du recruteur et cliquez simplement sur 'Envoyer'.`;\n\nconst emailContent = `From: Jacques Alphonse Matoko <jacks.matoko@gmail.com>\\r\\nTo: jacks.matoko@gmail.com\\r\\nSubject: =?UTF-8?B?${Buffer.from(subject).toString('base64')}?=\\r\\nContent-Type: text/plain; charset=UTF-8\\r\\nContent-Transfer-Encoding: base64\\r\\n\\r\\n${Buffer.from(body).toString('base64')}`;\n\nconst encoded = Buffer.from(emailContent).toString('base64').replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=/g, '');\n\nreturn {\n  json: {\n    raw: encoded,\n    offer_title: offer.title,\n    offer_company: offer.company,\n    offer_score: offer.score,\n    offer_location: offer.location,\n    offer_url: offer.source_url\n  }\n};"
+      },
+      "id": "prepare-gmail-draft",
+      "name": "9. Preparer Brouillon Gmail",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        360
+      ]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://kabwfcmpobsljdyclxoa.supabase.co/rest/v1/matches?on_conflict=user_id,job_offer_id",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/drafts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "apikey",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthYndmY21wb2JzbGpkeWNseG9hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4OTMyODE1NSwiZXhwIjoyMTA0OTA0MTU1fQ.Id5N4NLkl1lYQ6OYBtLFu_WmAyqAQs84NBVub3bDK_U"
-            },
-            {
-              "name": "Authorization",
-              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthYndmY21wb2JzbGpkeWNseG9hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4OTMyODE1NSwiZXhwIjoyMTA0OTA0MTU1fQ.Id5N4NLkl1lYQ6OYBtLFu_WmAyqAQs84NBVub3bDK_U"
-            },
-            {
-              "name": "Prefer",
-              "value": "resolution=merge-duplicates"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
@@ -168,24 +267,39 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"user_id\": \"6222f82f-86ed-4af3-aab2-98bc754cba24\",\n  \"job_offer_id\": \"{{ $json.id || $json[0].id }}\",\n  \"score\": {{ $('6. Normaliser Données Supabase').item.json.score }},\n  \"status\": \"{{ $('6. Normaliser Données Supabase').item.json.status }}\"\n}",
-        "options": {}
+        "jsonBody": "={\\n  \"message\": {\\n    \"raw\": \"{{ $json.raw }}\"\\n  }\\n}",
+        "options": {
+          "timeout": 20000
+        }
       },
-      "id": "insert-match",
-      "name": "8. Créer Match (Supabase Direct)",
+      "id": "gmail-create-draft",
+      "name": "10. Creer Brouillon Gmail OAuth2",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1720, 300]
+      "position": [
+        2200,
+        360
+      ],
+      "continueOnFail": true,
+      "credentials": {
+        "oAuth2Api": {
+          "id": "gmail-oauth2",
+          "name": "Gmail OAuth2 Jacques Matoko"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "const offer = $('6. Normaliser Données Supabase').first().json;\n\nconst payload = {\n  username: 'JobFlow IA • Assistant Jacques Matoko',\n  avatar_url: 'https://cdn-icons-png.flaticon.com/512/4712/4712038.png',\n  embeds: [\n    {\n      title: `🎯 Offre Qualifiée : ${offer.title}`,\n      description: `Une opportunité à fort potentiel (${offer.score}% de compatibilité) a été sélectionnée pour votre profil.`,\n      color: 2450411,\n      fields: [\n        { name: '🏢 Entreprise', value: String(offer.company || 'Entreprise'), inline: true },\n        { name: '📍 Lieu', value: String(offer.location || 'Remote / International'), inline: true },\n        { name: '⭐ Score IA', value: `${offer.score}%`, inline: true },\n        { name: '✉️ Candidat Destinataire', value: 'jacks.matoko@gmail.com', inline: true },\n        { name: '🔗 Lien pour postuler', value: String(offer.source_url || 'https://www.arbeitnow.com'), inline: false },\n        { name: '📝 Lettre de motivation rédigée par l\\'IA', value: `Objet : Candidature ${offer.title}\\n\\nMadame, Monsieur,\\nFort de plus de 10 ans en management QHSE (ISO 9001/14001/45001) et expert en automatisation IA (N8N, Python), je vous soumets ma candidature pour dynamiser vos projets...\\n\\n— Jacques Alphonse Matoko (+242 05 302 8383)`, inline: false }\n      ],\n      footer: { text: 'JobFlow IA • Dossier complet prêt à être envoyé' },\n      timestamp: new Date().toISOString()\n    }\n  ]\n};\n\nreturn { json: payload };"
+        "jsCode": "const offer = $('7. Normaliser Extraire Resultats IA').first().json;\n\nconst flags = {\n  'congo': '🇨🇬', 'brazzaville': '🇨🇬', 'pointe-noire': '🇨🇬',\n  'kinshasa': '🇨🇩', 'rdc': '🇨🇩', 'democratique': '🇨🇩',\n  'libreville': '🇬🇦', 'gabon': '🇬🇦',\n  'yaounde': '🇨🇲', 'douala': '🇨🇲', 'cameroun': '🇨🇲',\n  'dakar': '🇸🇳', 'senegal': '🇸🇳',\n  'france': '🇫🇷', 'paris': '🇫🇷',\n  'belgique': '🇧🇪', 'bruxelles': '🇧🇪',\n  'suisse': '🇨🇭', 'geneve': '🇨🇭',\n  'remote': '🌐', 'international': '🌍', 'worldwide': '🌐'\n};\n\nconst loc = (offer.location || '').toLowerCase();\nlet flag = '🌍';\nfor (const [k, v] of Object.entries(flags)) {\n  if (loc.includes(k)) { flag = v; break; }\n}\n\nconst color = offer.score >= 88 ? 3066993 : offer.score >= 75 ? 15844367 : 2450411;\n\nreturn {\n  json: {\n    username: 'JobFlow IA — Assistant Jacques Matoko',\n    avatar_url: 'https://cdn-icons-png.flaticon.com/512/4712/4712038.png',\n    embeds: [\n      {\n        title: `🎯 ${flag} ${offer.score}% — ${offer.title}`,\n        description: `**Analyse IA :** ${offer.analysis}`,\n        color: color,\n        fields: [\n          { name: '🏢 Entreprise', value: String(offer.company || 'N/A'), inline: true },\n          { name: `${flag} Lieu / Pays`, value: String(offer.location || 'N/A'), inline: true },\n          { name: '⭐ Score IA', value: `**${offer.score}%**`, inline: true },\n          { name: '📌 Source', value: String(offer.source || 'N/A'), inline: true },\n          { name: '✅ Statut', value: offer.score >= 80 ? '✅ Prêt à envoyer' : '🔍 À valider', inline: true },\n          { name: '📬 Gmail', value: '✅ Brouillon créé dans jacks.matoko@gmail.com', inline: true },\n          { name: '🔗 Lien offre', value: String(offer.source_url || 'https://reliefweb.int'), inline: false },\n          { name: '📝 Extrait lettre', value: (offer.lettre_motivation || '').slice(0, 280) + '...', inline: false }\n        ],\n        footer: { text: `JobFlow IA V2 • 5 sources • ${new Date().toLocaleDateString('fr-FR')}` },\n        timestamp: new Date().toISOString()\n      }\n    ]\n  }\n};"
       },
       "id": "prepare-discord-msg",
-      "name": "9. Préparer Message Discord",
+      "name": "11. Preparer Message Discord",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1940, 300]
+      "position": [
+        2420,
+        360
+      ]
     },
     {
       "parameters": {
@@ -206,39 +320,200 @@
         "options": {}
       },
       "id": "discord-notification",
-      "name": "10. Envoyer Alerte Discord",
+      "name": "12. Envoyer Alerte Discord",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2160, 300]
+      "position": [
+        2640,
+        360
+      ]
     }
   ],
   "connections": {
-    "1. Déclencheur Planifié (Toutes les 4h)": {
-      "main": [[{ "node": "2. Charger Profil Candidat (Supabase)", "type": "main", "index": 0 }]]
+    "1. Declencheur Planifie Toutes les 4h": {
+      "main": [
+        [
+          {
+            "node": "2. Charger Profil Candidat Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "2. Charger Profil Candidat (Supabase)": {
-      "main": [[{ "node": "3. Récupérer Offres (Arbeit Now)", "type": "main", "index": 0 }]]
+    "2. Charger Profil Candidat Supabase": {
+      "main": [
+        [
+          {
+            "node": "3a. ReliefWeb Afrique ONG",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "3b. ArbeitNow Remote International",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "3c. Remotive Remote Monde Entier",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "3d. ReliefWeb Afrique Centrale COG COD GAB CMR SEN",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "3e. Adzuna France Informatique Gestion QHSE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "3. Récupérer Offres (Arbeit Now)": {
-      "main": [[{ "node": "4. Préparer pour l'IA", "type": "main", "index": 0 }]]
+    "3a. ReliefWeb Afrique ONG": {
+      "main": [
+        [
+          {
+            "node": "4. Fusionner les 5 Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "4. Préparer pour l'IA": {
-      "main": [[{ "node": "5. Groq IA - Matching & Score", "type": "main", "index": 0 }]]
+    "3b. ArbeitNow Remote International": {
+      "main": [
+        [
+          {
+            "node": "4. Fusionner les 5 Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
     },
-    "5. Groq IA - Matching & Score": {
-      "main": [[{ "node": "6. Normaliser Données Supabase", "type": "main", "index": 0 }]]
+    "3c. Remotive Remote Monde Entier": {
+      "main": [
+        [
+          {
+            "node": "4. Fusionner les 5 Sources",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
     },
-    "6. Normaliser Données Supabase": {
-      "main": [[{ "node": "7. Enregistrer dans Job Offers (Supabase)", "type": "main", "index": 0 }]]
+    "3d. ReliefWeb Afrique Centrale COG COD GAB CMR SEN": {
+      "main": [
+        [
+          {
+            "node": "4. Fusionner les 5 Sources",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
     },
-    "7. Enregistrer dans Job Offers (Supabase)": {
-      "main": [[{ "node": "8. Créer Match (Supabase Direct)", "type": "main", "index": 0 }]]
+    "3e. Adzuna France Informatique Gestion QHSE": {
+      "main": [
+        [
+          {
+            "node": "4. Fusionner les 5 Sources",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
     },
-    "8. Créer Match (Supabase Direct)": {
-      "main": [[{ "node": "9. Préparer Message Discord", "type": "main", "index": 0 }]]
+    "4. Fusionner les 5 Sources": {
+      "main": [
+        [
+          {
+            "node": "5. Filtrer Pays Domaine Preparer IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "9. Préparer Message Discord": {
-      "main": [[{ "node": "10. Envoyer Alerte Discord", "type": "main", "index": 0 }]]
+    "5. Filtrer Pays Domaine Preparer IA": {
+      "main": [
+        [
+          {
+            "node": "6. Groq IA Score Lettre CV Adapte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6. Groq IA Score Lettre CV Adapte": {
+      "main": [
+        [
+          {
+            "node": "7. Normaliser Extraire Resultats IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7. Normaliser Extraire Resultats IA": {
+      "main": [
+        [
+          {
+            "node": "8. Enregistrer Offre Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8. Enregistrer Offre Supabase": {
+      "main": [
+        [
+          {
+            "node": "9. Preparer Brouillon Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9. Preparer Brouillon Gmail": {
+      "main": [
+        [
+          {
+            "node": "10. Creer Brouillon Gmail OAuth2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10. Creer Brouillon Gmail OAuth2": {
+      "main": [
+        [
+          {
+            "node": "11. Preparer Message Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "11. Preparer Message Discord": {
+      "main": [
+        [
+          {
+            "node": "12. Envoyer Alerte Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
