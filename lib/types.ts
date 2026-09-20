@@ -6,6 +6,7 @@ export type Opportunity = {
   company: string;
   location: string;
   source: string;
+  sourceUrl?: string;
   score: number;
   date: string;
   ready: boolean;
